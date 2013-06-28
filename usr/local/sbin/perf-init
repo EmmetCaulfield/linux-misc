@@ -1,0 +1,42 @@
+#!/bin/bash
+
+self=$(basename $0)
+kdev=/proc/sys/kernel/kptr_restrict
+
+function bail() {
+    echo "$self: ERROR: $1" >&2
+    exit 1
+}
+
+function log() {
+    echo "$self: $1"
+}
+
+function enable_ksyms() {
+    echo 0 > $kdev
+}
+
+function disable_ksyms() {
+    echo 1 > $kdev
+}
+
+if [ "$(id -u)" != 0 ]; then
+    bail "Must be root."
+fi
+
+# If we're de-initializing, we're done:
+if [ -n "$1" -a "$1" = '-r' ]; then
+    disable_ksyms
+    exit 0
+fi
+
+# To prevent contention for the PMU, de-initialize any vtune stuff:
+log "Deinitializing VTune"
+/usr/local/sbin/vtune-init -r
+
+# To prevent contention for the PMU, de-initialize any MSR stuff:
+log "Deinitializing MSR"
+/usr/local/sbin/msr-init -r
+
+# Disable kernel symbol pointer restriction:
+enable_ksyms

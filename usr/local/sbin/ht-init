@@ -1,0 +1,71 @@
+#!/bin/bash
+
+sys_cpu_dir=/sys/devices/system/cpu
+cpu_dev_stub=$sys_cpu_dir/cpu
+self=$(basename $0)
+
+# We need to enumerate the vCPUs in a couple of places:
+range=$(cat $sys_cpu_dir/possible)
+lo=$(echo $range | cut -d- -f1)
+hi=$(echo $range | cut -d- -f2)
+vcpu_list=$(seq $lo $hi)
+
+function bail() {
+    echo "$self: ERROR: $1" >&2
+    exit 1
+}
+
+function log() {
+    echo "$self: $1"
+}
+
+function print_vcpu_status() {
+    log "Possible vCPU range: $range"
+    for c in $vcpu_list; do
+	online=${cpu_dev_stub}${c}/online
+	[ -f $online ] && status=$(cat $online) || status=1 
+	[ $status = 1 ] && status='online' || status='offline'
+	log "vCPU $c: $status" 
+    done
+}
+
+function enable_offline_vcpus() {
+    for c in $vcpu_list; do
+	online=${cpu_dev_stub}${c}/online
+	[ -f $online ] && status=$(cat $online) || status=1 
+	if [ $status = 0 ]; then
+	    log "Enabling vCPU $c"
+	    echo 1 > $online
+	fi
+    done
+}
+
+function disable_online_vcpus() {
+    online_ht_vcpus=$(cat ${cpu_dev_stub}*/topology/thread_siblings_list  \
+	| sort -u | grep , | cut -d, -f2 )
+
+    if [ -z "$online_ht_vcpus" ]; then
+	log "Nothing to do."
+	return
+    fi
+
+    for c in $online_ht_vcpus; do
+	online=${cpu_dev_stub}${c}/online
+	log "Disabling vCPU $c"
+	echo 0 > $online
+    done
+}
+
+if [ "$(id -u)" != 0 ]; then
+    log "Not root. Will only show vCPU status."
+    print_vcpu_status
+    exit 0
+fi
+
+print_vcpu_status
+if [ -n "$1" -a "$1" = '-r' ]; then
+    disable_online_vcpus
+else
+    enable_offline_vcpus
+fi
+print_vcpu_status

@@ -1,0 +1,43 @@
+#!/bin/bash
+
+mod=msr
+self=$(basename $0)
+
+function bail() {
+    echo "$self: ERROR: $1" >&2
+    exit 1
+}
+
+function log() {
+    echo "$self: $1"
+}
+
+if [ "$(id -u)" != 0 ]; then
+    bail "Must be root."
+fi
+
+# If the kernel module is loaded, unload it:
+log "Unloading '${mod}' kernel module"
+if /sbin/lsmod | grep -qsi ${mod}; then
+    /sbin/rmmod ${mod}
+fi
+
+# If we're de-initializing, we're done:
+if [ -n "$1" -a "$1" = '-r' ]; then
+    log "Done."
+    exit 0
+fi
+
+# To prevent contention for the PMU, de-initialize any vtune stuff:
+log "Deinitializing for VTune"
+/usr/local/sbin/vtune-init -r
+
+log "Loading '${mod}' kernel module"
+kofile=$(find /lib/modules/$(uname -r)/ -name ${mod}.ko)
+/sbin/insmod ${kofile}          || bail "Failed to load module '${mod}'"
+
+log "Setting ownership on MSR devices"
+chown root.vtune /dev/cpu/*/msr || bail "Failed to chown MSR devices"
+
+log "Setting permissions on MSR devices"
+chmod 770 /dev/cpu/*/msr        || bail "Failed to chmod MSR devices"

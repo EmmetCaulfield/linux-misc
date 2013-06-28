@@ -1,0 +1,65 @@
+#!/bin/bash
+
+# By default, we're not in remove mode:
+remove=false
+
+# The kernel module file, loaded explicitly by insmod:
+kmod=/lib/modules/$(uname -r)/kernel/drivers/video/nvidia.ko
+
+# The basic name of this script for error messages and such:
+self=$(basename $0)
+
+function bail() {
+    echo "$self: ERROR: $1" >&2
+    exit 1
+}
+
+function log() {
+    echo "$self: $1"
+}
+
+if [ "$(id -u)" != 0 ]; then
+    bail "Must be root."
+fi
+
+
+# If the kernel module is loaded, unload it:
+if /sbin/lsmod | grep -qsi nvidia; then
+    /sbin/rmmod nvidia
+fi
+
+# Decide whether we're initializing or de-initializing:
+if [ -n "$1" -a "$1" = '-r' ]; then
+    remove=true
+else
+    # If initializing, reload the kernel module:
+    if [ -f "$kmod" ]; then
+	/sbin/insmod $kmod
+    else
+	bail "Kernel module not found for kernel $(uname -r)"
+    fi
+fi
+
+# $? should be the return value of insmod
+if [ "$?" -eq 0 ]; then
+    # Count the number of NVIDIA controllers found:
+    N_DEVS=$(lspci | grep '(3D|VGA compatible) controller' | grep -i 'nvidia' | wc -l)
+    # Create/delete that number of device nodes:
+    for i in $(seq 0 $(N_DEVS - 1)); do
+	dev=/dev/nvidia$i
+	if [ $remove = 'true' ]; then
+	    rm -f $dev
+	elif ! [ -c $dev ]; then
+	    mknod -m 666 $dev c 195 $i
+	fi
+    done
+    dev=/dev/nvidiactl
+    if [ $remove = 'true' ]; then
+	rm -f $dev
+    elif ! [ -c /dev/nvidiactl ]; then
+	mknod -m 666 /dev/nvidiactl c 195 255
+    fi
+else
+    echo 'Failed to load or remove nVidia kernel module' >&2
+    exit 1
+fi

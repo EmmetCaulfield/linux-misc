@@ -1,0 +1,77 @@
+#!/bin/bash
+
+ptrace_dev=/proc/sys/kernel/yama/ptrace_scope
+ptrace_cfg=/etc/sysctl.d/10-ptrace.conf
+nmiwdt_dev=/proc/sys/kernel/nmi_watchdog
+pmu_mod=sep3_8
+pwr_mod=apwr3_1
+
+self=$(basename $0)
+
+function bail() {
+    echo "$self: ERROR: $1" >&2
+    exit 1
+}
+
+function log() {
+    echo "$self: $1"
+}
+
+if [ "$(id -u)" != 0 ]; then
+    bail "Must be root."
+fi
+
+# Try to find the system default setting for ptrace security,
+# otherwise, assume that it's ON (this is Ubuntu)
+log "Determining system default setting for ptrace kernel security"
+if [ -r $ptrace_cfg ]; then
+    ptrace_default=$(sed -n					\
+	's/^kernel\.yama\.ptrace_scope\s*=\s*\([01]\)\s*$/\1/p' \
+	$ptrace_cfg)
+else
+    ptrace_default=1
+fi
+
+# If the kernel modules are loaded, unload them all. The
+# Intel-supplied init scripts do all that is necessary:
+for mod in $pmu_mod $pwr_mod; do
+    if /sbin/lsmod | grep -qsi "\<$mod\>"; then
+	log "Calling Intel init scripts to unload '$mod'"
+	service $mod stop
+    else
+	log "Module '$mod' not loaded."
+    fi
+done
+
+# Re-enable NMI watchdog:
+log "Re-enabling kernel NMI watchdog"
+echo 1 > $nmiwdt_dev
+# Conditionally re-enable ptrace security:
+
+log "Restoring system ptrace security setting ($ptrace_default)"
+echo $ptrace_default > $ptrace_dev
+
+# If we're de-initializing, we're done:
+if [ -n "$1" -a "$1" = '-r' ]; then
+    log "Done."
+    exit 0
+fi
+
+# Otherwise, we're initializing...
+
+# Remove MSR module to avoid potential conflict:
+log "Removing MSR module"
+/usr/local/sbin/msr-init -r
+
+# Disable NMI watchdog:
+log "Disabling kernel NMI watchdog"
+echo 0 > $nmiwdt_dev
+
+# Disable ptrace security:
+log "Disabling ptrace kernel security"
+echo 0 > $ptrace_dev
+
+#for mod in $pmu_mod $pwr_mod; do
+#    log "Calling Intel init scripts to load '$mod'"
+#    service $mod start
+#done
