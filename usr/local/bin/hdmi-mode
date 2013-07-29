@@ -1,0 +1,94 @@
+#!/bin/bash
+
+vif='HDMI1'
+
+function usage() {
+    def_out=2
+    def_ret=1
+    fd=${1:-$def_out}	# Write to stderr by default
+    rc=${2:-$def_ret}	# Return 1 to host by default
+
+    cat <<EOF >&$fd
+USAGE: $(basename $0) -a <hor> <ver> [freq]
+   or: $(basename $0) -r <hor> <ver> [freq]
+   or: $(basename $0) -r <name>
+   or: $(basename $0) -h
+
+   Uses xrandr and cvt to add (-a) or remove (-r) a VESA modeline
+   for video mode <hor>x<ver>@[freq] Hz to/from interface '$vif'
+EOF
+    exit $rc
+}
+
+
+function show_help() { 
+    cat <<EOF
+$(basename $0) uses 'xrandr' to add/remove a VESA modeline to/from video
+interface '$vif', given the horizontal and vertical resolution, <hor>
+and <ver>, respectively, and, optionally, the scan frequency, [freq]
+(see below). The parameters are passed to 'cvt' to determine the modeline
+from the parameter values.
+
+This script was written to simplify the process of manipulating video
+modes while trying to get a HDTV to display output from the HDMI port
+on a laptop computer.
+
+Note that the VESA mode added must, in general, be one for which an
+EDID code exists. This means that the common native panel resolution
+of 1366x768 is unlikely to work, and will be silently converted into
+1388x768 by 'cvt'.
+
+EOF
+    usage 1 0
+}
+
+
+function modename() {
+    if [ $# -lt 1 -o $# -gt 3 ]; then
+	usage
+    fi
+
+    if [ $# -gt 1 ]; then
+	name=$(cvt $@ | awk '/Modeline/ {print $2}')
+    else
+	name=$1
+    fi
+    echo $name | sed 's/"//g'
+}
+
+function addmode() {
+    if [ $# -lt 2 -o $# -gt 3 ]; then
+	usage
+    fi
+    name=$(modename $@)
+    xrandr --newmode $(							\
+	cvt $@ | awk '/Modeline/ {$1=""; gsub("\"", "", $2); print $0}' \
+    ) && xrandr --addmode $vif $name
+}
+
+function delmode() {
+    if [ $# -lt 1 -o $# -gt 3 ]; then
+	usage
+    fi
+
+    name=$(modename $@)
+    n=$(xrandr | awk "/$name/ {print NF}")
+    if [ $n -eq 3 ]; then
+	xrandr --rmmode $name
+    elif [ $n -eq 2 ]; then
+	xrandr --delmode $vif $name \
+	    && xrandr --rmmode $name
+    fi
+}
+
+op=$1; shift
+if [ "x$op" = "x-h" ]; then
+    show_help
+elif [ "x$op" = "x-a" ]; then
+    addmode $@
+    xrandr | grep $(modename $@)
+elif [ "x$op" = "x-r" ]; then
+    delmode $@
+else
+    usage
+fi
