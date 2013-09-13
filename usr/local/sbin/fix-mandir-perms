@@ -1,0 +1,30 @@
+#!/bin/bash
+
+# Occasionally, a problem crops up with 'dpkg' spitting out a "fopen:
+# permission denied" while processing 'man-db'. The issue here seems
+# to be permissions on /usr/share/man, /usr/local/share/man, or
+# /var/cache/man. Everything that 'dpkg' does here appears to be done
+# as user 'man', not as 'root', so the permissions really matter.
+#
+# This script ensures that 'man' has the necessary permissions to do
+# what it needs to do.
+
+self=$(basename $0)
+
+function bail() {
+    echo "$self: ERROR: $1" >&2
+    exit 1
+}
+
+if [ "$(id -u)" != 0 ]; then
+    bail "Must be root."
+fi
+
+for d in /usr/share/man /usr/local/share/man /var/cache/man; do
+    if [ -d $d ]; then
+	chmod 2755 $d
+	chown -R man:root $d
+	find $d -type d -exec chmod 2755 {} \;
+	find $d -type f -exec chmod 0644 {} \;
+    fi
+done
