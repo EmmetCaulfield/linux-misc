@@ -1,0 +1,37 @@
+#%Module1.0#
+##
+## modules modulefile
+##
+proc ModulesHelp { } {
+        global version
+
+        puts stderr "\ticc/$version - sets environment for Intel Composer XE $version."
+}
+
+module-whatis	"Loads the Intel Composer XE 2013.3.163 environment"
+conflict gcc icc suncc opencc
+set	stub		/opt/intel
+set	version		2013.3.163
+set     prefix          $stub/composer_xe_${version}
+set     arch            [uname machine]
+
+if {$arch == "x86_64"} {
+    set iarch intel64
+} else {
+    set iarch ia32
+}
+
+setenv	CPATH			${prefix}/mkl/include:${prefix}/tbb/include
+setenv	IDB_HOME		${prefix}/bin/${iarch}
+setenv	INCLUDE			${prefix}/mkl/include
+setenv	INTEL_LICENSE_FILE	${prefix}/licenses:${stub}/licenses
+setenv	IPPROOT			${prefix}/ipp
+setenv	LIBRARY_PATH		${prefix}/compiler/lib/${iarch}:${prefix}/compiler/lib/${iarch}:${prefix}/ipp/lib/${iarch}:${prefix}/compiler/lib/${iarch}:${prefix}/mkl/lib/${iarch}:${prefix}/tbb/lib/${iarch}/gcc4.4
+setenv	MIC_LD_LIBRARY_PATH	${prefix}/compiler/lib/mic:${prefix}/compiler/lib/mic:${stub}/mic/coi/device-linux-release/lib:${stub}/mic/myo/lib:${prefix}/mkl/lib/mic:${prefix}/tbb/lib/mic
+setenv	MKLROOT			${prefix}/mkl
+setenv	NLSPATH			${prefix}/compiler/lib/${iarch}/locale/%l_%t/%N:${prefix}/ipp/lib/${iarch}/locale/%l_%t/%N:${prefix}/mkl/lib/${iarch}/locale/%l_%t/%N:${prefix}/debugger/${iarch}/locale/%l_%t/%N
+setenv	TBBROOT			${prefix}/tbb
+
+prepend-path	PATH		${prefix}/bin/${iarch}:${prefix}/mpirt/bin/${iarch}:${prefix}/bin/${iarch}:${prefix}/bin/${iarch}_mic:${prefix}/debugger/gui/${iarch}
+prepend-path	MANPATH		${prefix}/man/en_US:${prefix}/man/en_US
+prepend-path 	LD_LIBRARY_PATH	${prefix}/compiler/lib/${iarch}:${prefix}/mpirt/lib/${iarch}:${prefix}/compiler/lib/${iarch}:${prefix}/ipp/lib/${iarch}:${stub}/mic/coi/host-linux-release/lib:${stub}/mic/myo/lib:${prefix}/compiler/lib/${iarch}:${prefix}/mkl/lib/${iarch}:${prefix}/tbb/lib/${iarch}/gcc4.4

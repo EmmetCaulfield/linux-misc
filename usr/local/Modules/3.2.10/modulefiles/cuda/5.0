@@ -1,0 +1,21 @@
+#%Module1.0#
+##
+## modules modulefile
+##
+proc ModulesHelp { } {
+        global version
+
+        puts stderr "\tcuda/$version - sets environment for Nvidia CUDA $version."
+        puts stderr "\n\tVersion $version\n"
+}
+
+module-whatis	"loads the CUDA SDK 5.0 environment."
+conflict cuda cupti
+
+# for Tcl script use only
+set	version		5.0
+set     topdir          /opt/nvidia/cuda-${version}
+
+prepend-path  PATH   		${topdir}/bin
+prepend-path  LD_LIBRARY_PATH	${topdir}/lib64:${topdir}/lib
+setenv	      CUDA_PATH		${toptir}

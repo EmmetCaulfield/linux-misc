@@ -1,0 +1,26 @@
+#%Module1.0#
+##
+## modules modulefile
+##
+proc ModulesHelp { } {
+        global version
+
+        puts stderr "\tgcc/$version - sets environment for GCC $version."
+}
+
+module-whatis	"Loads the gcc 4.8.2 environment"
+conflict gcc icc suncc opencc
+set	version		4.8.2
+set     prefix          /opt/gcc-4.8.2
+set     arch            [uname machine]
+
+prepend-path  PATH             ${prefix}/bin
+prepend-path  LD_LIBRARY_PATH  ${prefix}/lib
+
+if {$arch == "x86_64"} {
+    prepend-path  LD_LIBRARY_PATH  ${prefix}/lib64
+} else {
+    prepend-path  LD_LIBRARY_PATH  ${prefix}/lib32
+}
+
+prepend-path  MANPATH           ${prefix}/share/man

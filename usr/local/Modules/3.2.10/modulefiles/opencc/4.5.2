@@ -1,0 +1,26 @@
+#%Module1.0#
+##
+## modules modulefile
+##
+proc ModulesHelp { } {
+        global version
+
+        puts stderr "\topencc/$version - sets environment for AMD Open64 Compiler Suite $version."
+}
+
+module-whatis	"Loads the AMD Open64 Compiler Suite 4.5.2 environment"
+conflict gcc icc suncc opencc
+set	stub		/opt/amd
+set	version		4.5.2
+set     prefix          $stub/x86_open64-${version}
+set     arch            [uname machine]
+
+if {$arch == "x86_64"} {
+    set bits 64
+} else {
+    set bits 32
+}
+
+prepend-path	INCLUDE_PATH		${prefix}/include/${version}
+prepend-path	PATH			${prefix}/bin
+prepend-path 	LD_LIBRARY_PATH		${prefix}/lib/gcc-lib/${arch}-open64-linux/${version}

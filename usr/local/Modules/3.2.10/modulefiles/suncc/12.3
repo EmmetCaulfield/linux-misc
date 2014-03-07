@@ -1,0 +1,26 @@
+#%Module1.0#
+##
+## modules modulefile
+##
+proc ModulesHelp { } {
+        global version
+
+        puts stderr "\tsuncc/$version - sets environment for Solaris Studio $version."
+}
+
+module-whatis	"Loads the Solaris Studio 4.5.2 environment"
+conflict gcc icc suncc opencc
+set	stub		/opt/oracle
+set	version		12.3
+set     prefix          $stub/solarisstudio${version}
+set     arch            [uname machine]
+
+if {$arch == "x86_64"} {
+    set bits 64
+} else {
+    set bits 32
+}
+
+prepend-path	PATH			${prefix}/bin
+#prepend-path 	LD_LIBRARY_PATH		${prefix}/lib
+prepend-path	MANPATH			${prefix}/man

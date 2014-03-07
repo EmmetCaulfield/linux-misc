@@ -1,0 +1,27 @@
+#%Module1.0#
+##
+## modules modulefile
+##
+proc ModulesHelp { } {
+        global version
+
+        puts stderr "\tvtune/2011 - sets environment for Intel VTune Amplifier XE 2011."
+        puts stderr "\n\tVersion $version\n"
+}
+
+module-whatis	"Loads the VTune Amplifier XE 2011 environment"
+conflict vtune
+set	version		2011
+set     prefix          /opt/intel/vtune_amplifier_xe_2011
+set     arch            [uname machine]
+
+if {$arch == "x86_64"} {
+    prepend-path  PATH             ${prefix}/bin64
+    prepend-path  LD_LIBRARY_PATH  ${prefix}/lib64
+} else {
+    prepend-path  PATH             ${prefix}/bin32
+    prepend-path  LD_LIBRARY_PATH  ${prefix}/lib32
+}
+
+prepend-path  MANPATH           ${prefix}/man
+# setenv        VTUNE_AMPLIFIER_XE_2011_DIR  ${prefix}

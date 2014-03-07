@@ -1,0 +1,23 @@
+#%Module1.0#
+##
+## modules modulefile
+##
+proc ModulesHelp { } {
+        global version
+
+        puts stderr "\tcuda/$version - sets environment for Nvidia CUDA SDK with CUPTI"
+        puts stderr "\n\tVersion $version\n"
+}
+
+module-whatis	"loads the CUDA SDK 5.5.22 environment with CUPTI."
+conflict cuda cupti
+
+# for Tcl script use only
+set	version		5.5.22
+set     topdir          /opt/nvidia/cuda-${version}
+set     cuptidir        ${topdir}/extras/CUPTI
+
+prepend-path  PATH   		${topdir}/bin
+prepend-path  LD_LIBRARY_PATH	${topdir}/lib64:${cuptidir}/lib64:${topdir}/lib:${cuptidir}/lib
+prepend-path  C_INCLUDE_PATH    ${topdir}/include
+setenv        CUDA_PATH         ${topdir}

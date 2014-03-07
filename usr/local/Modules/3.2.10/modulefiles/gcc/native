@@ -1,0 +1,10 @@
+#%Module1.0#
+##
+proc ModulesHelp { } {
+        global version
+
+        puts stderr "\tgcc/$version - sets environment for native GCC."
+}
+
+module-whatis	"Null module to leave native GCC as default compiler."
+conflict gcc icc suncc opencc
