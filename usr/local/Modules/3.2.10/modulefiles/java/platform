@@ -1,0 +1,17 @@
+#%Module1.0#
+source $::env(MODULESHOME)/lib/get_real_home.tcl
+
+proc ModulesHelp { } {
+        global version
+
+        puts stderr "\tjava/$version - system's default Java."
+}
+
+module-whatis	"This system's default Java environment"
+conflict java jdk jre
+set	version		platform
+set     prefix		[get_real_home java]
+set     arch            [uname machine]
+
+setenv        JAVA_HOME		${prefix}
+prepend-path  PATH		${prefix}/bin

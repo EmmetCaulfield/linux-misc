@@ -1,0 +1,17 @@
+#%Module1.0#
+
+proc ModulesHelp { } {
+        global version
+	global release
+        puts stderr "\tjdk/$version - Oracle JDK-$release."
+}
+
+set release 1.7.0_07
+set version 7u7
+module-whatis "Loads the Oracle JDK $version ($release) environment"
+
+conflict jdk jre java
+set prefix /opt/oracle/jdk$release
+
+setenv        JAVA_HOME		${prefix}
+prepend-path  PATH		${prefix}/bin

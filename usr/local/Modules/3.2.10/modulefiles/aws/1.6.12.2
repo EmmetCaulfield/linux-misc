@@ -1,0 +1,17 @@
+#%Module1.0#
+
+proc ModulesHelp { } {
+        global version
+
+        puts stderr "\taws/$version - Amazon AWS/EC2 Tools v.$version."
+}
+
+conflict aws
+module load java
+
+set	version		1.6.12.2
+module-whatis		"Amazon AWS/EC2 Tools environment ($version)"
+set     prefix          /opt/amazon/ec2-api-tools-${version}
+
+setenv        EC2_HOME  ${prefix}
+prepend-path  PATH      ${prefix}/bin
