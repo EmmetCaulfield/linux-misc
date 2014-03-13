@@ -3,14 +3,14 @@
 # By default, we're not in remove mode:
 remove=false
 
-# The kernel module file, loaded explicitly by insmod:
-kmod=/lib/modules/$(uname -r)/kernel/drivers/video/nvidia.ko
+# Candidate kernel module files, loaded explicitly by insmod:
+kmods=$(locate nvidia.ko | grep "/$(uname -r)/")
 
 # The basic name of this script for error messages and such:
 self=$(basename $0)
 
 function bail() {
-    echo "$self: ERROR: $1" >&2
+    echo "$self: ERROR: $1." >&2
     exit 1
 }
 
@@ -18,48 +18,68 @@ function log() {
     echo "$self: $1"
 }
 
+function warn() {
+    echo "$self: WARNING: $1." >&2
+}
+
 if [ "$(id -u)" != 0 ]; then
-    bail "Must be root."
+    bail "must be root"
 fi
 
 
 # If the kernel module is loaded, unload it:
 if /sbin/lsmod | grep -qsi nvidia; then
-    /sbin/rmmod nvidia
+    log "attempting to unload kernel module"
+    if /sbin/rmmod nvidia; then
+	log "kernel module unloaded"
+    else
+	warn "failed to unload kernel module"
+    fi
 fi
 
 # Decide whether we're initializing or de-initializing:
+declare -i loaded=0
 if [ -n "$1" -a "$1" = '-r' ]; then
     remove=true
 else
     # If initializing, reload the kernel module:
-    if [ -f "$kmod" ]; then
-	/sbin/insmod $kmod
+    if [ -z "$kmods" ]; then
+	bail "no kernel modules found"
     else
-	bail "Kernel module not found for kernel $(uname -r)"
+	for kmod in $kmods; do
+	    if [ -f "$kmod" ]; then
+		log "attempting to load kernel module '$kmod'"
+		if /sbin/insmod $kmod; then
+		    log "loaded kernel module '$kmod'"
+		    loaded=1
+		    break
+		else
+		    warn "failed to load kernel module '$kmod'"
+		fi
+	    fi
+	done
     fi
 fi
 
-# $? should be the return value of insmod
-if [ "$?" -eq 0 ]; then
+if [ $loaded -eq 1 ]; then
+    log "creating character-special device files"
     # Count the number of NVIDIA controllers found:
     N_DEVS=$(lspci | grep '(3D|VGA compatible) controller' | grep -i 'nvidia' | wc -l)
     # Create/delete that number of device nodes:
-    for i in $(seq 0 $(N_DEVS - 1)); do
+    for i in $(seq 0 $(($N_DEVS - 1))); do
 	dev=/dev/nvidia$i
 	if [ $remove = 'true' ]; then
-	    rm -f $dev
+	    rm -f $dev || bail "failed to remove '$dev'"
 	elif ! [ -c $dev ]; then
-	    mknod -m 666 $dev c 195 $i
+	    mknod -m 666 $dev c 195 $i || bail "failed to create '$dev'"
 	fi
     done
     dev=/dev/nvidiactl
     if [ $remove = 'true' ]; then
-	rm -f $dev
+	rm -f $dev || bail "failed to remove '$dev'"
     elif ! [ -c /dev/nvidiactl ]; then
-	mknod -m 666 /dev/nvidiactl c 195 255
+	mknod -m 666 /dev/nvidiactl c 195 255 || bail "failed to create '$dev'"
     fi
-else
-    echo 'Failed to load or remove nVidia kernel module' >&2
-    exit 1
 fi
+
+log "done"
