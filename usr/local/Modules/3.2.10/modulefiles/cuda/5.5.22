@@ -9,7 +9,7 @@ proc ModulesHelp { } {
         puts stderr "\n\tVersion $version\n"
 }
 
-module-whatis	"loads the CUDA SDK 5.5.22 environment."
+module-whatis	"CUDA SDK 5.5.22 environment."
 conflict cuda cupti
 
 # for Tcl script use only

@@ -9,7 +9,7 @@ proc ModulesHelp { } {
         puts stderr "\n\tVersion $version\n"
 }
 
-module-whatis	"Loads the VTune Amplifier XE 2011 environment"
+module-whatis	"VTune Amplifier XE 2011 environment"
 conflict vtune
 set	version		2011
 set     prefix          /opt/intel/vtune_amplifier_xe_2011

@@ -8,7 +8,7 @@ proc ModulesHelp { } {
         puts stderr "\ticc/$version - sets environment for Intel Composer XE $version."
 }
 
-module-whatis	"Loads the Intel Composer XE 2013.3.163 environment"
+module-whatis	"Intel Composer XE 2013.3.163 environment"
 conflict gcc icc suncc opencc
 set	stub		/opt/intel
 set	version		2013.3.163
