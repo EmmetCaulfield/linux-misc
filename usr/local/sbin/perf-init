@@ -31,12 +31,16 @@ if [ -n "$1" -a "$1" = '-r' ]; then
 fi
 
 # To prevent contention for the PMU, de-initialize any vtune stuff:
-log "Deinitializing VTune"
-/usr/local/sbin/vtune-init -r
+if [ -x /usr/local/sbin/vtune-init ]; then
+    log "Deinitializing VTune"
+    /usr/local/sbin/vtune-init -r
+fi
 
 # To prevent contention for the PMU, de-initialize any MSR stuff:
-log "Deinitializing MSR"
-/usr/local/sbin/msr-init -r
+if [ -x /usr/local/sbin/msr-init ]; then
+    log "Deinitializing MSR"
+    /usr/local/sbin/msr-init -r
+fi
 
 # Disable kernel symbol pointer restriction:
 enable_ksyms

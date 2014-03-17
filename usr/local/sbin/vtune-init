@@ -68,8 +68,10 @@ fi
 # Otherwise, we're initializing...
 
 # Remove MSR module to avoid potential conflict:
-log "Removing MSR module"
-/usr/local/sbin/msr-init -r
+if [ -x /usr/local/sbin/msr-init ]; then
+    log "Removing MSR module"
+    /usr/local/sbin/msr-init -r
+fi
 
 # Disable NMI watchdog:
 log "Disabling kernel NMI watchdog"

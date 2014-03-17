@@ -1,6 +1,7 @@
 #!/bin/bash
 
 mod=msr
+msrgrp=vtune
 self=$(basename $0)
 
 function bail() {
@@ -29,15 +30,17 @@ if [ -n "$1" -a "$1" = '-r' ]; then
 fi
 
 # To prevent contention for the PMU, de-initialize any vtune stuff:
-log "Deinitializing for VTune"
-/usr/local/sbin/vtune-init -r
+if [ -x /usr/local/sbin/vtune-init ]; then
+    log "Deinitializing for VTune"
+    /usr/local/sbin/vtune-init -r
+fi
 
 log "Loading '${mod}' kernel module"
 kofile=$(find /lib/modules/$(uname -r)/ -name ${mod}.ko)
 /sbin/insmod ${kofile}          || bail "Failed to load module '${mod}'"
 
 log "Setting ownership on MSR devices"
-chown root.vtune /dev/cpu/*/msr || bail "Failed to chown MSR devices"
+chown root.$msrgrp /dev/cpu/*/msr || bail "Failed to chown MSR devices"
 
 log "Setting permissions on MSR devices"
 chmod 770 /dev/cpu/*/msr        || bail "Failed to chmod MSR devices"
