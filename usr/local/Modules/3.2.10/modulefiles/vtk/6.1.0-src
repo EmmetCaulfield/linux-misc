@@ -1,0 +1,24 @@
+#%Module1.0#
+##
+## modules modulefile
+##
+proc ModulesHelp { } {
+        global version
+
+        puts stderr "\tvtk/$version - VTK $release built from source."
+        puts stderr "\n\tVersion $version\n"
+}
+
+conflict vtk
+
+set version 6.1.0-src
+set release 6.1
+module-whatis "VTK $release built from source ($version)"
+
+set topdir  /opt/kitware/vtk-${release}
+set pypath  lib/python2.7/site-packages
+
+prepend-path PATH            ${topdir}/bin
+prepend-path LD_LIBRARY_PATH ${topdir}/lib
+prepend-path C_INCLUDE_PATH  ${topdir}/include
+prepend-path PYTHONPATH      ${topdir}/${pypath}

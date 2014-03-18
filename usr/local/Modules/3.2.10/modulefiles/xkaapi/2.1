@@ -1,0 +1,19 @@
+#%Module1.0#
+
+proc ModulesHelp { } {
+        global version
+
+        puts stderr "\txkaapi/$version - INRIA xkaapi $version parallel lib/API."
+        puts stderr "\n\tVersion $version\n"
+}
+
+# XKAAPI was built with CUPTI support from the 5.5.22 CUDA SDK:
+module load cupti/5.5.22
+
+set version 2.1
+set topdir  /opt/inria/xkaapi-${version}
+module-whatis	"XKAAPI $version parallel programming API environment."
+
+prepend-path  PATH   		${topdir}/bin
+prepend-path  LD_LIBRARY_PATH	${topdir}/lib
+setenv        C_INCLUDE_PATH    ${topdir}/include

@@ -5,23 +5,22 @@
 proc ModulesHelp { } {
         global version
 
-        puts stderr "\tcuda/$version - sets environment for Nvidia CUDA SDK with CUPTI"
+        puts stderr "\tcupti/$version - Nvidia CUDA SDK $version with CUPTI"
         puts stderr "\n\tVersion $version\n"
 }
 
-module-whatis	"CUDA SDK 5.5.22 environment with CUPTI."
-conflict cuda cupti
+set version 5.5.22
 
-# for Tcl script use only
-set	version		5.5.22
-set     topdir          /opt/nvidia/cuda-${version}
-set     cuptidir        ${topdir}/extras/CUPTI
+module-whatis "CUDA SDK $version with CUPTI."
+
+# Must use the same CUDA version:
+module load cuda/$version
+
+set topdir $::env(CUDA_PATH)/extras/CUPTI
 
 # Nvidia installs 64-bit libraries to /lib64/ and 32-bit libraries to /lib/,
 # which is the opposite of what Ubuntu and RedHat expect. I have moved all
-# /lib/ directories under ${topdir} to /lib32/ and symlinked /lib/ to /lib64/
+# /lib/ directories in the CUDA SDK to /lib32/ and symlinked /lib/ to /lib64/
 # to restore order to the universe as far as most other software is concerned.
-prepend-path  PATH   		${topdir}/bin
-prepend-path  LD_LIBRARY_PATH	${topdir}/lib64:${cuptidir}/lib64:${topdir}/lib32:${cuptidir}/lib32
-prepend-path  C_INCLUDE_PATH    ${topdir}/include
-setenv        CUDA_PATH         ${topdir}
+append-path LD_LIBRARY_PATH ${topdir}/lib64:${topdir}/lib32
+append-path C_INCLUDE_PATH  ${topdir}/include
