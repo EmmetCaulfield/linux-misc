@@ -1,0 +1,8 @@
+/var/log/noip-update.log {
+	weekly
+	missingok
+	rotate 5
+	compress
+	create 640 root adm
+	notifempty
+}
