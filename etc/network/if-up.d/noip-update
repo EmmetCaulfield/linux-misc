@@ -8,10 +8,18 @@
 # for root only (e.g. chmod 0700 noip-update) because it contains your
 # noip.com password in clear text.
 #
-#---------------------------------------------------------------------
+# If 'NOIP_MODE' is 'remote', then 'NOIP_ECHO' is used to determine
+# the IP address seen from the Internet; Otherwise, the DHCP IP is
+# retrieved from the environment variable DHCP4_IP_ADDRESS.
+# 
+# The NOIP_ECHO service is assumed to return a bare IP address as
+# plain text and nothing else.
+# ---------------------------------------------------------------------
 NOIP_USER='my_no-ip_username'
 NOIP_PASS='my_no-ip_password'
 NOIP_HOST='my.no-ip.host.name'
+NOIP_MODE=remote
+NOIP_ECHO='http://ipecho.net/plain'
 #=====================================================================
 
 
@@ -41,24 +49,45 @@ NOIP_HOST='my.no-ip.host.name'
 #-------------------------------------------------------
 NOIP_STUB='dynupdate.no-ip.com/nic/update'
 SELF="$(basename $0)"
+LOGFILE="/var/log/${SELF}.log"
 
+# Utility function to format log messages:
 log () {
     echo "[$(date +'%Y-%m-%d %H:%M:%S')]: $*" >> "${LOGFILE}"
 }
 
+# Produce a URL in the right format for NoIP given an IP
 url () {
-    echo "https://${NOIP_USER}:${NOIP_PASS}@${NOIP_STUB}?hostname=${NOIP_HOST}&myip=${DHCP4_IP_ADDRESS}"
+    echo "https://${NOIP_USER}:${NOIP_PASS}@${NOIP_STUB}?hostname=${NOIP_HOST}&myip=$1"
 }
 
-if [ -z "${DHCP4_IP_ADDRESS}" ]; then
-    log 'No IP address supplied... exiting'
+# Use 'curl' if possible, otherwise try 'wget', otherwise bail:
+if which curl > /dev/null; then
+    fetch='curl -s'
+elif which wget > /dev/null; then
+    fetch='wget -qO-'
+else
+    log 'No "curl" or "wget"... exiting'
     exit 1
 fi
 
-if ! which curl > /dev/null; then
-    log 'No "curl" on PATH... exiting'
+# Decide what IP to use based on current mode:
+IP=''
+if [ "${NOIP_MODE}" = 'remote' ]; then
+    IP=$($fetch "${NOIP_ECHO}")
+else
+    IP="${DHCP4_IP_ADDRESS}"
+fi
+
+# Bail if we couldn't determine the right IP:
+if [ -z "$IP" ]; then
+    log 'Could not determine IP address... exiting'
     exit 2
 fi
 
-response=$(curl "$(url)" 2>/dev/null)
-log "${DHCP4_IP_ADDRESS} RESPONSE: ${response}"
+# Make the actual change request to NoIP and log the response:
+response=$($fetch "$(url $IP)")
+if [ -z "$response" ]; then
+    response='NO RESPONSE'
+fi
+log "${IP} ${NOIP_MODE} ${response}"
