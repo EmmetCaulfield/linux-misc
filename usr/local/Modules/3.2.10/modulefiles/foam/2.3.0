@@ -1,0 +1,18 @@
+#%Module1.0#
+
+proc ModulesHelp { } {
+        global version
+        puts stderr "\tfoam/$version - OpenFOAM $version."
+}
+
+set version 2.3.0
+module-whatis "OpenFOAM $version environment"
+
+conflict foam
+
+set prefix /opt/openfoam230
+prepend-path  PATH		${prefix}/bin
+
+set prefix /opt/paraviewopenfoam410
+prepend-path  PATH		${prefix}/bin
+prepend-path  LD_LIBRARY_PATH	${prefix}/lib
