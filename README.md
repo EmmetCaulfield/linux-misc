@@ -15,4 +15,4 @@ Highlights include:
   * [A DiceWare dictionary generator](usr/local/bin/diceware-dict.sh)
   * [(De-)initialization scripts for CUDA, Intel VTune, HyperThreading support, “perf”, and msr.ko](usr/local/sbin/)
   * [Python VTK examples](usr/local/share/vtk/Examples/Python)
-  * [No-IP network update script](etc/network/if-up.d/noip-update) and [corresponging logrotate config](etc/logrotate.d/noip-update)
+  * [No-IP network update script](etc/network/if-up.d/noip-update) and [corresponding logrotate config](etc/logrotate.d/noip-update)
